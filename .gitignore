@@ -33,3 +33,6 @@ desktop.ini
 
 # контекст Claude
 CLAUDE.md
+
+#custom use script
+main.py
