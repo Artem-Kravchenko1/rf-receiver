@@ -1,7 +1,7 @@
 [project]
 name = "fm-receiver"
 version = "0.1.0"
-description = "Add your description here"
+description = "FM band receiver circuit calculation"
 readme = "README.md"
 authors = [
     { name = "Artem Kravchenko", email = "powitrula2015@gmail.com" }
@@ -15,9 +15,6 @@ dependencies = [
     "plotly>=7.1.0",
     "sympy>=1.14.0",
 ]
-
-[project.scripts]
-fm-receiver = "fm_receiver:main"
 
 [build-system]
 requires = ["uv_build>=0.12.24,<0.13.0"]
