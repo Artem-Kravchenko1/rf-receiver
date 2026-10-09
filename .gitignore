@@ -8,3 +8,25 @@ wheels/
 
 # Virtual environments
 .venv
+
+# результати, які генерує код
+results/
+
+# Quarto: проміжні файли та зібраний звіт
+.quarto/
+*_files/
+*.docx
+!template.docx
+
+# кеші інструментів
+.pytest_cache/
+.ruff_cache/
+__marimo__/
+
+# секрети
+.env
+
+# службові файли Windows і Word
+Thumbs.db
+desktop.ini
+~$*
