@@ -32,13 +32,13 @@ DEFAULT_FP = FrequencyParameters()
 DEFAULT_CVP = CVarParameters()
 
 
-def C(f_0, cp: CircuitParameters = DEFAULT_CP):
+def C_total(f_0, cp: CircuitParameters = DEFAULT_CP):
     res_C = 1 / (4 * np.pi**2 * f_0**2 * cp.L)
     return np.where(res_C > cp.C_par, res_C, np.nan)
 
 
 def C_v(f_0, cp: CircuitParameters = DEFAULT_CP):
-    res_C_v = C(f_0, cp) - cp.C_par
+    res_C_v = C_total(f_0, cp) - cp.C_par
     return np.where(res_C_v > 0, res_C_v, np.nan)
 
 
