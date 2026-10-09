@@ -30,3 +30,6 @@ __marimo__/
 Thumbs.db
 desktop.ini
 ~$*
+
+# контекст Claude
+CLAUDE.md
