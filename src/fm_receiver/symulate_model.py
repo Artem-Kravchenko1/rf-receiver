@@ -1,3 +1,5 @@
+from dataclasses import asdict
+
 import sympy as sp
 
 from fm_receiver.model import (
@@ -7,7 +9,6 @@ from fm_receiver.model import (
     CircuitParameters,
     CVarParameters,
 )
-from dataclasses import asdict
 
 f_0, f, f_IF, f_im = sp.symbols("f_0 f f_IF f_im", positive=True)
 L, C, C_par, C_v, R_loss = sp.symbols("L C C_par C_v R_loss", positive=True)
