@@ -36,9 +36,9 @@ results["f_0"] = sp.solve(eq_resonance, f_0)[0]
 results["C(f_0)"] = sp.solve(eq_resonance, C)[0]
 
 results["C_v(f_0)"] = sp.solve(sp.Eq(C, defs[C]), C_v)[0].subs(C, results["C(f_0)"])
-results[U_v] = sp.solve(sp.Eq(C_v, defs[C_v]), U_v)[0]
+results["U_v"] = sp.solve(sp.Eq(C_v, defs[C_v]), U_v)[0]
 
-results["U_v(f_0)"] = results[U_v].subs(C_v, results["C_v(f_0)"])
+results["U_v(f_0)"] = results["U_v"].subs(C_v, results["C_v(f_0)"])
 
 results["dU_v/df_0"] = sp.diff(results["U_v(f_0)"], f_0)
 
@@ -59,27 +59,33 @@ BW_high_limit_roots = sp.solve(BW_high_limit_eq, f)
 
 
 def select_limit(roots):
-    limit = sp.nan
+    """
+    Function selects the positive limit.
+    It checks the given formula at a point,
+    which can be any of phisically apropriate values.
+    That works because these particular roots signs
+    are defined, if assuming their variables to be physical.
+    In particular here - real positive numbers.
+    """
     positive_roots = []
     default_values = {**asdict(DEFAULT_CP), **asdict(DEFAULT_CVP)}
 
-    for i in range(len(roots)):
-        root = roots[i]
-        root = root.subs(C, results["C(f_0)"])
-        free_symbols = {s.name: s for s in root.free_symbols}
+    for root in roots:
+        modified_root = root.subs(C, results["C(f_0)"])
+        free_symbols = {s.name: s for s in modified_root.free_symbols}
         needed_default_values = [var for var in free_symbols if var in default_values]
-        root = root.subs(
+        modified_root = modified_root.subs(
             [(free_symbols[var], default_values[var]) for var in needed_default_values]
         )
-        if root.free_symbols != set({f_0}):
+        if modified_root.free_symbols != set({f_0}):
             continue
-        if root.subs(f_0, DEFAULT_FP.f_min) > 0:
-            positive_roots.append(roots[i])
+        if modified_root.subs(f_0, DEFAULT_FP.f_min) > 0:
+            positive_roots.append(root)
 
-    if len(positive_roots) > 0:
-        limit = positive_roots[0]
-
-    return limit
+    if len(positive_roots) == 1:
+        return positive_roots[0]
+    else:
+        raise ValueError(f"Expected 1 positive root, got {len(positive_roots)}.")
 
 
 BW_low_limit = select_limit(BW_low_limit_roots)
