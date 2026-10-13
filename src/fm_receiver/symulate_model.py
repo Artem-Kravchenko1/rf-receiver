@@ -62,8 +62,8 @@ def select_limit(roots):
     """
     Function selects the positive limit.
     It checks the given formula at a point,
-    which can be any of phisically apropriate values.
-    That works because these particular roots signs
+    which can be any of physically apropriate values.
+    That works because these particular roots' signs
     are defined, if assuming their variables to be physical.
     In particular here - real positive numbers.
     """
