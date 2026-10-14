@@ -50,6 +50,8 @@ def C_and_C_v_of_f_0_fig(cp=DEFAULT_CP, fp=DEFAULT_FP):
     f_0 = model.freq_set(fp)
     ax = C_and_C_v_of_f_0_ax(ax, f_0, cp, fp)
 
+    ax.legend()
+
     return fig
 
 
@@ -64,24 +66,20 @@ def U_v_of_f_0_ax(ax, f_0, cp=DEFAULT_CP, cvp=DEFAULT_CVP, fp=DEFAULT_FP):
 
     ax.set_ylabel(r"$U_\mathrm{v}$, V")
 
-    U_v_min_lim, U_v_max_lim = ax.get_ylim()
-    ax_height = U_v_max_lim - U_v_min_lim
-
     for i, (station_f, station_U_v) in enumerate(zip(stations_f, stations_U_v)):
         station_label_ha = "left" if i == 0 else "center"
+        station_text_offset = (0, 20) if i == 0 else (0, 24)
         ax.annotate(
             rf"$f_0$ = {MHz(station_f):.1f} MHz"
             + "\n"
             + rf"$U_\mathrm{{v}}$ = {station_U_v:.1f} V",
             xy=(MHz(station_f), station_U_v),
-            xytext=(
-                MHz(station_f),
-                station_U_v + ax_height * 0.1,
-            ),
+            textcoords="offset points",
+            xytext=station_text_offset,
             arrowprops=DEFAULT_ANOT_ARROW,
             ha=station_label_ha,
             va="bottom",
-            fontsize="small",
+            fontsize="x-small",
             bbox=DEFAULT_BBOX,
         )
 
@@ -93,5 +91,7 @@ def U_v_of_f_0_fig(cp=DEFAULT_CP, cvp=DEFAULT_CVP, fp=DEFAULT_FP):
 
     f_0 = model.freq_set(fp)
     ax = U_v_of_f_0_ax(ax, f_0, cp, cvp, fp)
+
+    ax.legend()
 
     return fig

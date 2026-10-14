@@ -4,7 +4,7 @@ import numpy as np
 
 from fm_receiver.model import DEFAULT_FP
 
-STYLE_PATH = Path(__file__).parent + "/style.mplstyle"
+STYLE_PATH = Path(__file__).parent / "style.mplstyle"
 
 
 DEFAULT_BBOX = {

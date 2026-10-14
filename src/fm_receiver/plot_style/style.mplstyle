@@ -17,6 +17,5 @@ legend.fontsize  : small
 lines.linewidth  : 1.5
 lines.markersize : 5
 axes.grid        : True
-axes.legend      : True
 grid.alpha       : 0.4
 legend.framealpha: 0.9
