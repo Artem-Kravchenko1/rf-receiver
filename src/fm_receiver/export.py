@@ -13,7 +13,7 @@ FIGURES_DICT = {
 }
 
 
-def export_all_plots(save_path: Path = DEFAULT_SAVE_PATH):
+def export_all_figures(save_path: Path = DEFAULT_SAVE_PATH):
     save_path = Path(save_path)
     save_path.mkdir(parents=True, exist_ok=True)
 
@@ -25,4 +25,4 @@ def export_all_plots(save_path: Path = DEFAULT_SAVE_PATH):
 
 
 if __name__ == "__main__":
-    export_all_plots()
+    export_all_figures()
