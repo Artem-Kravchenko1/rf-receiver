@@ -1,11 +1,10 @@
 from pathlib import Path
 
-import numpy as np
+from matplotlib.ticker import MaxNLocator, MultipleLocator
 
 from fm_receiver.model import DEFAULT_FP
 
 STYLE_PATH = Path(__file__).parent / "style.mplstyle"
-
 
 DEFAULT_BBOX = {
     "boxstyle": "round,pad=0.2",
@@ -19,6 +18,11 @@ DEFAULT_ANOT_ARROW = {
     "lw": 0.8,
 }
 
+DEFAULT_MAJOR_LOCATOR_PARAMS = {
+    "nbins": 10,
+    "steps": [1, 2, 2.5, 5, 10],
+}
+
 
 def MHz(f):
     return f * 1e-6
@@ -28,39 +32,30 @@ def pF(C):
     return C * 1e12
 
 
-def round_by(val, step, rounding_type="nearest"):
-    if rounding_type == "up":
-        return np.ceil(val / step) * step
-    elif rounding_type == "down":
-        return np.floor(val / step) * step
-    elif rounding_type == "nearest":
-        return np.round(val / step) * step
-    else:
-        raise ValueError(
-            f"Unexpected rounding type {rounding_type!r}, expected 'up', 'down' or 'nearest'"
-        )
+def kOhm(R):
+    return R * 1e-3
 
 
 def setup_f_ax(
     ax,
+    *,
     fp=DEFAULT_FP,
     f_min=None,
     f_max=None,
-    step=2,
+    step=None,
     axis_label="$f_0$",
 ):
     if f_min is None:
         f_min = fp.f_min
     if f_max is None:
         f_max = fp.f_max
+    if step is not None:
+        major_locator = MultipleLocator(MHz(step))
+    else:
+        major_locator = MaxNLocator(**DEFAULT_MAJOR_LOCATOR_PARAMS)
     ax.set_xlabel(rf"{axis_label}, MHz")
     ax.set_xlim(MHz(f_min), MHz(f_max))
-    ax.set_xticks(
-        np.arange(
-            round_by(MHz(f_min), step, "up"),
-            round_by(MHz(f_max), step, "down") + step / 2,
-            step,
-        )
-    )
+
+    ax.xaxis.set_major_locator(major_locator)
 
     return ax
