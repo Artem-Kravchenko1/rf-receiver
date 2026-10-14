@@ -1,55 +1,15 @@
 import matplotlib.pyplot as plt
-from matplotlib.layout_engine import ConstrainedLayoutEngine
 import numpy as np
 
 from fm_receiver import model
 from fm_receiver.model import DEFAULT_CP, DEFAULT_CVP, DEFAULT_FP
-
-
-def MHz(f):
-    return f * 1e-6
-
-
-def pF(C):
-    return C * 1e12
-
-
-def round_by(val, step, rounding_type="nearest"):
-    if rounding_type == "up":
-        return np.ceil(val / step) * step
-    elif rounding_type == "down":
-        return np.floor(val / step) * step
-    elif rounding_type == "nearest":
-        return np.round(val / step) * step
-    else:
-        raise ValueError(
-            f"Unexpected rounding type {rounding_type!r}, expected 'up', 'down' or 'nearest'"
-        )
-
-
-def setup_f_ax(
-    ax,
-    fp=DEFAULT_FP,
-    f_min=None,
-    f_max=None,
-    step=2,
-    axis_label="$f_0$",
-):
-    if f_min is None:
-        f_min = fp.f_min
-    if f_max is None:
-        f_max = fp.f_max
-    ax.set_xlabel(rf"{axis_label}, MHz")
-    ax.set_xlim(MHz(f_min), MHz(f_max))
-    ax.set_xticks(
-        np.arange(
-            round_by(MHz(f_min), step, "up"),
-            round_by(MHz(f_max), step, "down") + step / 2,
-            step,
-        )
-    )
-
-    return ax
+from fm_receiver.plot_style.style import (
+    DEFAULT_ANOT_ARROW,
+    DEFAULT_BBOX,
+    MHz,
+    pF,
+    setup_f_ax,
+)
 
 
 def C_and_C_v_of_f_0_ax(ax, f_0, cp=DEFAULT_CP, fp=DEFAULT_FP):
@@ -70,31 +30,22 @@ def C_and_C_v_of_f_0_ax(ax, f_0, cp=DEFAULT_CP, fp=DEFAULT_FP):
         arrowprops={"arrowstyle": "<->"},
     )
 
+    anot_arrow = DEFAULT_ANOT_ARROW.copy()
+    anot_arrow["arrowstyle"] = "-"
     ax.annotate(
         rf"$C_\mathrm{{par}}$ = {pF(cp.C_par):.1f} pF",
         xy=(MHz(anot_x_f), pF((anot_y_C + anot_y_C_v) / 2)),
         xytext=(MHz(anot_x_f) + MHz(fp.f_max - fp.f_min) * 0.1, pF(anot_y_C)),
-        arrowprops={
-            "arrowstyle": "-",
-            "lw": 0.8,
-        },
+        arrowprops=anot_arrow,
         va="bottom",
-        bbox={
-            "boxstyle": "round,pad=0.2",
-            "fc": "white",
-            "ec": "gray",
-            "alpha": 0.75,
-        },
+        bbox=DEFAULT_BBOX,
     )
-
-    ax.grid()
-    ax.legend()
 
     return ax
 
 
 def C_and_C_v_of_f_0_fig(cp=DEFAULT_CP, fp=DEFAULT_FP):
-    fig, ax = plt.subplots(layout=ConstrainedLayoutEngine(w_pad=0.15, h_pad=0.15))
+    fig, ax = plt.subplots()
 
     f_0 = model.freq_set(fp)
     ax = C_and_C_v_of_f_0_ax(ax, f_0, cp, fp)
@@ -127,29 +78,18 @@ def U_v_of_f_0_ax(ax, f_0, cp=DEFAULT_CP, cvp=DEFAULT_CVP, fp=DEFAULT_FP):
                 MHz(station_f),
                 station_U_v + ax_height * 0.1,
             ),
-            arrowprops={
-                "arrowstyle": "->",
-                "lw": 0.8,
-            },
+            arrowprops=DEFAULT_ANOT_ARROW,
             ha=station_label_ha,
             va="bottom",
-            fontsize=8,
-            bbox={
-                "boxstyle": "round,pad=0.2",
-                "fc": "white",
-                "ec": "gray",
-                "alpha": 0.75,
-            },
+            fontsize="small",
+            bbox=DEFAULT_BBOX,
         )
-
-    ax.grid()
-    ax.legend()
 
     return ax
 
 
 def U_v_of_f_0_fig(cp=DEFAULT_CP, cvp=DEFAULT_CVP, fp=DEFAULT_FP):
-    fig, ax = plt.subplots(layout=ConstrainedLayoutEngine(w_pad=0.15, h_pad=0.15))
+    fig, ax = plt.subplots()
 
     f_0 = model.freq_set(fp)
     ax = U_v_of_f_0_ax(ax, f_0, cp, cvp, fp)

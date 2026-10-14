@@ -1,0 +1,22 @@
+# --- фігура: ширина під текст A4 (поля 30/10 мм → 170 мм) ---
+figure.figsize                  : 6.7, 4.0    # дюйми ≈ 17 × 10 см
+figure.dpi                      : 100
+figure.constrained_layout.use   : True
+figure.constrained_layout.w_pad : 0.15
+figure.constrained_layout.h_pad : 0.15
+savefig.dpi                     : 300
+
+# --- шрифти: як у звіті ---
+font.family      : serif
+font.serif       : Times New Roman, DejaVu Serif   # другий — запасний, якщо Times немає
+mathtext.fontset : stix                           # формули в стилі Times
+font.size        : 11
+legend.fontsize  : small
+
+# --- елементи ---
+lines.linewidth  : 1.5
+lines.markersize : 5
+axes.grid        : True
+axes.legend      : True
+grid.alpha       : 0.4
+legend.framealpha: 0.9
