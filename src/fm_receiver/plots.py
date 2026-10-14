@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.ticker import MultipleLocator
 
 from fm_receiver import model
 from fm_receiver.model import DEFAULT_CP, DEFAULT_CVP, DEFAULT_FP
@@ -7,12 +8,22 @@ from fm_receiver.plot_style.style import (
     DEFAULT_ANOT_ARROW,
     DEFAULT_BBOX,
     MHz,
+    kOhm,
     pF,
     setup_f_ax,
 )
 
+DEFAULT_F_GRID = {
+    "f_min": 80e6,
+    "f_max": 130e6,
+    "points_amount": 501,
+}
 
-def C_and_C_v_of_f_0_ax(ax, f_0, cp=DEFAULT_CP, fp=DEFAULT_FP):
+DEFAULT_F_0_PARAMS = (88e6, 98e6, 108e6)
+
+
+def C_and_C_v_of_f_0_ax(ax, *, cp=DEFAULT_CP, fp=DEFAULT_FP):
+    f_0 = model.freq_set(fp)
     ax = setup_f_ax(ax, fp=fp)
 
     ax.plot(MHz(f_0), pF(model.C_total(f_0, cp=cp)), label=r"$C_\mathrm{total}$")
@@ -20,7 +31,7 @@ def C_and_C_v_of_f_0_ax(ax, f_0, cp=DEFAULT_CP, fp=DEFAULT_FP):
 
     ax.set_ylabel(r"$C$, pF")
 
-    anot_x_f = np.round((fp.f_min + fp.f_max) / 2)
+    anot_x_f = (fp.f_min + fp.f_max) / 2
     anot_y_C = model.C_total(anot_x_f, cp=cp)
     anot_y_C_v = model.C_v(anot_x_f, cp=cp)
     ax.annotate(
@@ -47,15 +58,15 @@ def C_and_C_v_of_f_0_ax(ax, f_0, cp=DEFAULT_CP, fp=DEFAULT_FP):
 def C_and_C_v_of_f_0_fig(cp=DEFAULT_CP, fp=DEFAULT_FP):
     fig, ax = plt.subplots()
 
-    f_0 = model.freq_set(fp)
-    ax = C_and_C_v_of_f_0_ax(ax, f_0, cp, fp)
+    ax = C_and_C_v_of_f_0_ax(ax, cp=cp, fp=fp)
 
     ax.legend()
 
     return fig
 
 
-def U_v_of_f_0_ax(ax, f_0, cp=DEFAULT_CP, cvp=DEFAULT_CVP, fp=DEFAULT_FP):
+def U_v_of_f_0_ax(ax, *, cp=DEFAULT_CP, cvp=DEFAULT_CVP, fp=DEFAULT_FP):
+    f_0 = model.freq_set(fp)
     ax = setup_f_ax(ax, fp=fp)
 
     ax.plot(MHz(f_0), model.U_v(f_0, cp=cp, cvp=cvp), label=r"$U_\mathrm{v}$")
@@ -89,9 +100,98 @@ def U_v_of_f_0_ax(ax, f_0, cp=DEFAULT_CP, cvp=DEFAULT_CVP, fp=DEFAULT_FP):
 def U_v_of_f_0_fig(cp=DEFAULT_CP, cvp=DEFAULT_CVP, fp=DEFAULT_FP):
     fig, ax = plt.subplots()
 
-    f_0 = model.freq_set(fp)
-    ax = U_v_of_f_0_ax(ax, f_0, cp, cvp, fp)
+    ax = U_v_of_f_0_ax(ax, cp=cp, cvp=cvp, fp=fp)
 
     ax.legend()
+
+    return fig
+
+
+def mag_Z_of_f_ax(
+    ax,
+    *,
+    f_grid=DEFAULT_F_GRID,
+    f_0_params=DEFAULT_F_0_PARAMS,
+    cp=DEFAULT_CP,
+    fp=DEFAULT_FP,
+):
+    f_min, f_max, points_amount = f_grid.values()
+    f = np.linspace(
+        start=f_min,
+        stop=f_max,
+        num=points_amount,
+    )
+
+    ax = setup_f_ax(
+        ax,
+        fp=fp,
+        f_min=f_grid["f_min"],
+        f_max=f_grid["f_max"],
+        axis_label="$f$",
+    )
+
+    ax.set_ylabel(r"$|Z|$, k$\Omega$")
+
+    for f_0 in f_0_params:
+        ax.plot(
+            MHz(f),
+            kOhm(np.abs(model.Z_total(f, f_0, cp=cp))),
+            label=rf"$f_0$ = {MHz(f_0)} MHz",
+        )
+
+    return ax
+
+
+def phase_Z_of_f_ax(
+    ax,
+    *,
+    f_grid=DEFAULT_F_GRID,
+    f_0_params=DEFAULT_F_0_PARAMS,
+    cp=DEFAULT_CP,
+    fp=DEFAULT_FP,
+):
+    f_min, f_max, points_amount = f_grid.values()
+    f = np.linspace(
+        start=f_min,
+        stop=f_max,
+        num=points_amount,
+    )
+
+    ax = setup_f_ax(
+        ax,
+        fp=fp,
+        f_min=f_min,
+        f_max=f_max,
+        axis_label="$f$",
+    )
+
+    ax.set_ylabel(r"$\arg Z$, $\degree$")
+
+    for f_0 in f_0_params:
+        ax.plot(
+            MHz(f),
+            np.angle(model.Z_total(f, f_0, cp=cp), deg=True),
+            label=rf"$f_0$ = {MHz(f_0)} MHz",
+        )
+
+    ax.yaxis.set_major_locator(MultipleLocator(45))
+
+    return ax
+
+
+def Z_of_f_fig(
+    f_grid=DEFAULT_F_GRID,
+    f_0_params=DEFAULT_F_0_PARAMS,
+    cp=DEFAULT_CP,
+    fp=DEFAULT_FP,
+):
+    fig, axs = plt.subplots(2, 1, sharex=True, figsize=(6.7, 6))
+
+    axs[0] = mag_Z_of_f_ax(axs[0], f_grid=f_grid, f_0_params=f_0_params, cp=cp, fp=fp)
+    axs[1] = phase_Z_of_f_ax(axs[1], f_grid=f_grid, f_0_params=f_0_params, cp=cp, fp=fp)
+
+    for ax in axs:
+        ax.label_outer()
+        ax.legend()
 
     return fig
