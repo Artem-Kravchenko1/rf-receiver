@@ -10,6 +10,7 @@ DEFAULT_SAVE_PATH = Path("results") / "figures"
 FIGURES_DICT = {
     "C_fig": plots.C_and_C_v_of_f_0_fig,
     "U_v_fig": plots.U_v_of_f_0_fig,
+    "Z_fig": plots.Z_of_f_fig,
 }
 
 
