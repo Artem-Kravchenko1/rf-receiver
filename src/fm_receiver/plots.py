@@ -10,6 +10,7 @@ from fm_receiver.model import DEFAULT_CP, DEFAULT_CVP, DEFAULT_FP
 from fm_receiver.plot_style.style import (
     DEFAULT_ANOT_ARROW,
     DEFAULT_BBOX,
+    DEFAULT_HELPER_LINE,
     MHz,
     dB,
     kOhm,
@@ -263,8 +264,7 @@ def K_U_of_f_ax(
 
     ax.axhline(
         -fp.A_threshold,
-        color="grey",
-        linestyle="dashed",
+        **DEFAULT_HELPER_LINE,
         label=rf"$A_\mathrm{{th}}$ = {fp.A_threshold:.1f} dB",
     )
 
@@ -294,9 +294,6 @@ def Q_BW_A_of_f_0_ax(
     cp=DEFAULT_CP,
     fp=DEFAULT_FP,
 ):
-    if plot_func is None:
-        raise ValueError("Plot function is not defined!")
-
     f_0 = model.freq_set(fp=fp)
 
     ax = setup_f_ax(
@@ -345,5 +342,75 @@ def Q_of_f_0_fig(
     fig, ax = plt.subplots()
     ax = Q_of_f_0_ax(ax, R_loss_params=R_loss_params, cp=cp, fp=fp)
     ax.legend()
+
+    return fig
+
+
+def BW_of_f_0_ax(
+    ax,
+    *,
+    R_loss_params=DEFAULT_R_LOSS_PARAMS,
+    cp=DEFAULT_CP,
+    fp=DEFAULT_FP,
+):
+    ax = Q_BW_A_of_f_0_ax(
+        ax,
+        plot_func=model.BW,
+        format_func=MHz,
+        plot_label="BW, MHz",
+        R_loss_params=R_loss_params,
+        cp=cp,
+        fp=fp,
+    )
+
+    return ax
+
+
+def BW_of_f_0_fig(
+    R_loss_params=DEFAULT_R_LOSS_PARAMS,
+    cp=DEFAULT_CP,
+    fp=DEFAULT_FP,
+):
+    fig, ax = plt.subplots()
+    ax = BW_of_f_0_ax(ax, R_loss_params=R_loss_params, cp=cp, fp=fp)
+    ax.legend()
+
+    return fig
+
+
+def A_of_f_0_ax(
+    ax,
+    *,
+    R_loss_params=DEFAULT_R_LOSS_PARAMS,
+    cp=DEFAULT_CP,
+    fp=DEFAULT_FP,
+):
+    A_plot_func = partial(model.A, fp=fp)
+    ax = Q_BW_A_of_f_0_ax(
+        ax,
+        plot_func=A_plot_func,
+        plot_label="A, dB",
+        R_loss_params=R_loss_params,
+        cp=cp,
+        fp=fp,
+    )
+
+    ax.axhline(
+        fp.A_threshold,
+        **DEFAULT_HELPER_LINE,
+        label=rf"$A_\mathrm{{th}}$ = {fp.A_threshold:.1f} dB",
+    )
+
+    return ax
+
+
+def A_of_f_0_fig(
+    R_loss_params=DEFAULT_R_LOSS_PARAMS,
+    cp=DEFAULT_CP,
+    fp=DEFAULT_FP,
+):
+    fig, ax = plt.subplots()
+    ax = A_of_f_0_ax(ax, R_loss_params=R_loss_params, cp=cp, fp=fp)
+    ax.legend(loc="upper right")
 
     return fig

@@ -19,6 +19,11 @@ DEFAULT_ANOT_ARROW = {
     "lw": 0.8,
 }
 
+DEFAULT_HELPER_LINE = {
+    "color": "grey",
+    "linestyle": "dashed",
+}
+
 DEFAULT_MAJOR_LOCATOR_PARAMS = {
     "nbins": 10,
     "steps": [1, 2, 2.5, 5, 10],

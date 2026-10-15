@@ -12,6 +12,9 @@ FIGURES_DICT = {
     "U_v_fig": plots.U_v_of_f_0_fig,
     "Z_fig": plots.Z_of_f_fig,
     "K_U_fig": plots.K_U_of_f_fig,
+    "Q_fig": plots.Q_of_f_0_fig,
+    "BW_fig": plots.BW_of_f_0_fig,
+    "A_fig": plots.A_of_f_0_fig,
 }
 
 
