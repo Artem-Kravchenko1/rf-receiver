@@ -16,6 +16,9 @@ FIGURES_DICT = {
     "BW_fig": plots.BW_of_f_0_fig,
     "A_fig": plots.A_of_f_0_fig,
     "A_map_fig": plots.A_map_of_f_0_fig,
+    "A_status_table_fig": plots.A_status_table_fig,
+    "dU_df_fig": plots.dU_df_of_f_0_fig,
+    "U_tol_fig": plots.U_tol_of_f_0_fig,
 }
 
 

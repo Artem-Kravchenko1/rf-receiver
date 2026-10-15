@@ -16,6 +16,8 @@ from fm_receiver.plot_style.style import (
     MHz,
     dB,
     kOhm,
+    mV,
+    per_MHz,
     pF,
     setup_f_ax,
 )
@@ -31,6 +33,27 @@ DEFAULT_F_0_PARAMS = (88e6, 98e6, 108e6)
 DEFAULT_R_LOSS_PARAMS = (1e3, 1.5e3, 3e3)
 
 DEFAULT_POINTS_AMOUNT_FOR_3D = 51
+
+DEFAULT_GAMMA_PARAMS = (0.4, 0.5, 0.75)
+
+DEFAULT_C_PAR_PARAMS = (1e-12, 3e-12, 6e-12)
+
+DEFAULT_F_TOL_PARAMS = (10e3, 50e3, 100e3)
+
+DEFAULT_R_LOSS_TABLE = (1e3, 1.25e3, 1.5e3, 1.75e3, 2e3, 3e3)
+
+STATUS_CMAP = LinearSegmentedColormap.from_list(
+    "status", ["tab:red", "white", "tab:green"]
+)
+
+
+def status_norm(A_values, A_threshold):
+    return TwoSlopeNorm(
+        vmin=min(np.min(A_values), A_threshold * 0.9, A_threshold - 1),
+        vcenter=A_threshold,
+        vmax=max(np.max(A_values), A_threshold * 1.1, A_threshold + 1),
+    )
+
 
 DEFAULT_R_LOSS_GRID = {
     "R_loss_min": 0.5e3,
@@ -452,21 +475,12 @@ def A_map_of_f_0_ax(
 
     ax.computed_zorder = False
 
-    custom_norm = TwoSlopeNorm(
-        vmin=min(A_map.min(), fp.A_threshold * 0.9, fp.A_threshold - 1),
-        vcenter=fp.A_threshold,
-        vmax=max(A_map.max(), fp.A_threshold * 1.1, fp.A_threshold + 1),
-    )
-    custom_cmap = LinearSegmentedColormap.from_list(
-        "status", ["tab:red", "white", "tab:green"]
-    )
-
     A_surface = ax.plot_surface(
         MHz(f_0_coords),
         kOhm(R_loss_coords),
         A_map,
-        norm=custom_norm,
-        cmap=custom_cmap,
+        norm=status_norm(A_map, fp.A_threshold),
+        cmap=STATUS_CMAP,
         zorder=1,
     )
 
@@ -574,5 +588,166 @@ def A_map_of_f_0_fig(
     )
 
     fig.legend(handles=legend_handles, loc="outside lower center", ncols=2)
+
+    return fig
+
+
+def dU_df_by_gamma_ax(
+    ax,
+    *,
+    gamma_params=DEFAULT_GAMMA_PARAMS,
+    cp=DEFAULT_CP,
+    cvp=DEFAULT_CVP,
+    fp=DEFAULT_FP,
+):
+    f_0 = model.freq_set(fp=fp)
+    ax = setup_f_ax(ax, fp=fp)
+    ax.set_ylabel(r"$dU_\mathrm{v}/df_0$, V/MHz")
+
+    for gamma in gamma_params:
+        cvp_modified = dataclasses.replace(cvp, gamma=gamma)
+        ax.plot(
+            MHz(f_0),
+            per_MHz(model.dU_df_0(f_0, cp=cp, cvp=cvp_modified)),
+            label=rf"$\gamma$ = {gamma:g}",
+        )
+
+    return ax
+
+
+def dU_df_by_C_par_ax(
+    ax,
+    *,
+    C_par_params=DEFAULT_C_PAR_PARAMS,
+    cp=DEFAULT_CP,
+    cvp=DEFAULT_CVP,
+    fp=DEFAULT_FP,
+):
+    f_0 = model.freq_set(fp=fp)
+    ax = setup_f_ax(ax, fp=fp)
+    ax.set_ylabel(r"$dU_\mathrm{v}/df_0$, V/MHz")
+
+    for C_par in C_par_params:
+        cp_modified = dataclasses.replace(cp, C_par=C_par)
+        ax.plot(
+            MHz(f_0),
+            per_MHz(model.dU_df_0(f_0, cp=cp_modified, cvp=cvp)),
+            label=rf"$C_\mathrm{{par}}$ = {pF(C_par):g} pF",
+        )
+
+    return ax
+
+
+def dU_df_of_f_0_fig(
+    gamma_params=DEFAULT_GAMMA_PARAMS,
+    C_par_params=DEFAULT_C_PAR_PARAMS,
+    cp=DEFAULT_CP,
+    cvp=DEFAULT_CVP,
+    fp=DEFAULT_FP,
+):
+    fig, axs = plt.subplots(2, 1, sharex=True, figsize=(6.7, 6))
+
+    dU_df_by_gamma_ax(axs[0], gamma_params=gamma_params, cp=cp, cvp=cvp, fp=fp)
+    dU_df_by_C_par_ax(axs[1], C_par_params=C_par_params, cp=cp, cvp=cvp, fp=fp)
+
+    for ax in axs:
+        ax.label_outer()
+        ax.legend()
+
+    return fig
+
+
+def U_tol_of_f_0_ax(
+    ax,
+    *,
+    f_tol_params=DEFAULT_F_TOL_PARAMS,
+    cp=DEFAULT_CP,
+    cvp=DEFAULT_CVP,
+    fp=DEFAULT_FP,
+):
+    f_0 = model.freq_set(fp=fp)
+    ax = setup_f_ax(ax, fp=fp)
+    ax.set_ylabel(r"$U_\mathrm{tol}$, mV")
+
+    for f_tol in f_tol_params:
+        fp_modified = dataclasses.replace(fp, f_tol=f_tol)
+        ax.plot(
+            MHz(f_0),
+            mV(model.U_tol(f_0, cp=cp, fp=fp_modified, cvp=cvp)),
+            label=rf"$f_\mathrm{{tol}}$ = {f_tol * 1e-3:g} kHz",
+        )
+
+    return ax
+
+
+def U_tol_of_f_0_fig(
+    f_tol_params=DEFAULT_F_TOL_PARAMS, cp=DEFAULT_CP, cvp=DEFAULT_CVP, fp=DEFAULT_FP
+):
+    fig, ax = plt.subplots()
+    ax = U_tol_of_f_0_ax(ax, f_tol_params=f_tol_params, cp=cp, cvp=cvp, fp=fp)
+    ax.legend()
+
+    return fig
+
+
+def A_status_table_ax(
+    ax, *, R_loss_params=DEFAULT_R_LOSS_TABLE, cp=DEFAULT_CP, fp=DEFAULT_FP
+):
+    stations_f = np.array(fp.f_stations)
+    R_loss = np.array(R_loss_params)[:, None]  # rows: R_loss, columns: stations
+
+    cp_modified = dataclasses.replace(cp, R_loss=R_loss)
+    A_table = model.A(stations_f, cp=cp_modified, fp=fp)
+    status_table = model.station_status(stations_f, cp=cp_modified, fp=fp)
+
+    ax.imshow(
+        A_table,
+        cmap=STATUS_CMAP,
+        norm=status_norm(A_table, fp.A_threshold),
+        origin="lower",
+        aspect="auto",
+    )
+
+    for i in range(A_table.shape[0]):
+        for j in range(A_table.shape[1]):
+            ax.text(
+                j,
+                i,
+                f"{status_table[i, j]}\n{A_table[i, j]:.1f} dB",
+                ha="center",
+                va="center",
+                fontsize="small",
+            )
+
+    ax.set_xticks(range(len(stations_f)), labels=[f"{MHz(f):g}" for f in stations_f])
+    ax.set_yticks(
+        range(len(R_loss_params)), labels=[f"{kOhm(R):g}" for R in R_loss_params]
+    )
+    ax.set_xlabel(r"station $f_0$, MHz")
+    ax.set_ylabel(r"$R_\mathrm{loss}$, k$\Omega$")
+    ax.grid(False)
+
+    # frame around the row of the current receiver
+    for i, R in enumerate(R_loss_params):
+        if np.isclose(R, cp.R_loss):
+            ax.add_patch(
+                mpatches.Rectangle(
+                    (-0.5, i - 0.5),
+                    len(stations_f),
+                    1,
+                    fill=False,
+                    edgecolor="black",
+                    linewidth=2,
+                )
+            )
+
+    return ax
+
+
+def A_status_table_fig(
+    R_loss_params=DEFAULT_R_LOSS_TABLE, cp=DEFAULT_CP, fp=DEFAULT_FP
+):
+    fig, ax = plt.subplots()
+    ax = A_status_table_ax(ax, R_loss_params=R_loss_params, cp=cp, fp=fp)
 
     return fig
