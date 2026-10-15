@@ -8,6 +8,7 @@ from fm_receiver.plot_style.style import (
     DEFAULT_ANOT_ARROW,
     DEFAULT_BBOX,
     MHz,
+    dB,
     kOhm,
     pF,
     setup_f_ax,
@@ -193,5 +194,86 @@ def Z_of_f_fig(
     for ax in axs:
         ax.label_outer()
         ax.legend()
+
+    return fig
+
+
+def K_U_of_f_ax(
+    ax,
+    *,
+    f_grid=DEFAULT_F_GRID,
+    f_0_params=DEFAULT_F_0_PARAMS,
+    cp=DEFAULT_CP,
+    fp=DEFAULT_FP,
+):
+    f_min, f_max, points_amount = f_grid.values()
+    f = np.linspace(
+        start=f_min,
+        stop=f_max,
+        num=points_amount,
+    )
+
+    ax = setup_f_ax(
+        ax,
+        fp=fp,
+        f_min=f_grid["f_min"],
+        f_max=f_grid["f_max"],
+        axis_label="$f$",
+    )
+
+    ax.set_ylabel(r"$K_{U}$, dB")
+
+    text_offset = (0, -20)
+
+    for f_0 in f_0_params:
+        ax.plot(
+            MHz(f),
+            dB(model.K_U(f, f_0, cp=cp)),
+            label=rf"$f_0$ = {MHz(f_0)} MHz",
+        )
+
+        line_color = ax.lines[-1].get_color()
+
+        f_im = model.f_im(f_0, fp=fp)
+        K_U_of_f_im = model.K_U(f_im, f_0, cp=cp)
+        ax.plot(
+            MHz(f_im),
+            dB(K_U_of_f_im),
+            marker="o",
+            color=line_color,
+        )
+
+        A = model.A(f_0, cp=cp, fp=fp)
+        ax.annotate(
+            rf"$f_\mathrm{{im}}$ = {MHz(f_im):.1f} MHz" + "\n" + rf"$A$ = {A:.1f} dB",
+            xy=(MHz(f_im), dB(K_U_of_f_im)),
+            textcoords="offset points",
+            xytext=text_offset,
+            arrowprops=DEFAULT_ANOT_ARROW,
+            ha="center",
+            va="top",
+            fontsize="x-small",
+            bbox=DEFAULT_BBOX,
+        )
+
+    ax.axhline(
+        -fp.A_threshold,
+        color="grey",
+        linestyle="dashed",
+        label=rf"$A_\mathrm{{th}}$ = {fp.A_threshold:.1f} dB",
+    )
+
+    return ax
+
+
+def K_U_of_f_fig(
+    f_grid=DEFAULT_F_GRID,
+    f_0_params=DEFAULT_F_0_PARAMS,
+    cp=DEFAULT_CP,
+    fp=DEFAULT_FP,
+):
+    fig, ax = plt.subplots()
+    ax = K_U_of_f_ax(ax, f_grid=f_grid, f_0_params=f_0_params, cp=cp, fp=fp)
+    ax.legend()
 
     return fig
