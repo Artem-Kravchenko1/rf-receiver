@@ -1,3 +1,6 @@
+import dataclasses
+from functools import partial
+
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.ticker import MultipleLocator
@@ -21,6 +24,8 @@ DEFAULT_F_GRID = {
 }
 
 DEFAULT_F_0_PARAMS = (88e6, 98e6, 108e6)
+
+DEFAULT_R_LOSS_PARAMS = (1e3, 1.5e3, 3e3)
 
 
 def C_and_C_v_of_f_0_ax(ax, *, cp=DEFAULT_CP, fp=DEFAULT_FP):
@@ -274,6 +279,71 @@ def K_U_of_f_fig(
 ):
     fig, ax = plt.subplots()
     ax = K_U_of_f_ax(ax, f_grid=f_grid, f_0_params=f_0_params, cp=cp, fp=fp)
+    ax.legend()
+
+    return fig
+
+
+def Q_BW_A_of_f_0_ax(
+    ax,
+    *,
+    plot_func,
+    format_func=lambda x: x,
+    plot_label="",
+    R_loss_params=DEFAULT_R_LOSS_PARAMS,
+    cp=DEFAULT_CP,
+    fp=DEFAULT_FP,
+):
+    if plot_func is None:
+        raise ValueError("Plot function is not defined!")
+
+    f_0 = model.freq_set(fp=fp)
+
+    ax = setup_f_ax(
+        ax,
+        fp=fp,
+        axis_label="$f_0$",
+    )
+
+    ax.set_ylabel(plot_label)
+
+    for R_loss in R_loss_params:
+        cp_modified = dataclasses.replace(cp, R_loss=R_loss)
+        ax.plot(
+            MHz(f_0),
+            format_func(plot_func(f_0, cp=cp_modified)),
+            label=rf"$R_\mathrm{{loss}}$ = {kOhm(R_loss)} k$\Omega$",
+        )
+
+    return ax
+
+
+def Q_of_f_0_ax(
+    ax,
+    *,
+    R_loss_params=DEFAULT_R_LOSS_PARAMS,
+    cp=DEFAULT_CP,
+    fp=DEFAULT_FP,
+):
+    ax = Q_BW_A_of_f_0_ax(
+        ax,
+        plot_func=model.Q,
+        plot_label="$Q$",
+        R_loss_params=R_loss_params,
+        cp=cp,
+        fp=fp,
+    )
+
+    return ax
+
+
+def Q_of_f_0_fig(
+    R_loss_params=DEFAULT_R_LOSS_PARAMS,
+    cp=DEFAULT_CP,
+    fp=DEFAULT_FP,
+):
+    fig, ax = plt.subplots()
+    ax = Q_of_f_0_ax(ax, R_loss_params=R_loss_params, cp=cp, fp=fp)
     ax.legend()
 
     return fig
