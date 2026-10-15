@@ -46,6 +46,14 @@ def dB(x):
     return 20 * np.log10(x)
 
 
+def mV(U):
+    return U * 1e3
+
+
+def per_MHz(x):
+    return x * 1e6
+
+
 def setup_f_ax(
     ax,
     *,
