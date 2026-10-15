@@ -15,6 +15,7 @@ FIGURES_DICT = {
     "Q_fig": plots.Q_of_f_0_fig,
     "BW_fig": plots.BW_of_f_0_fig,
     "A_fig": plots.A_of_f_0_fig,
+    "A_map_fig": plots.A_map_of_f_0_fig,
 }
 
 

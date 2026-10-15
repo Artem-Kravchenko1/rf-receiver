@@ -1,8 +1,10 @@
 import dataclasses
 from functools import partial
 
+import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.colors import LinearSegmentedColormap, TwoSlopeNorm
 from matplotlib.ticker import MultipleLocator
 
 from fm_receiver import model
@@ -27,6 +29,14 @@ DEFAULT_F_GRID = {
 DEFAULT_F_0_PARAMS = (88e6, 98e6, 108e6)
 
 DEFAULT_R_LOSS_PARAMS = (1e3, 1.5e3, 3e3)
+
+DEFAULT_POINTS_AMOUNT_FOR_3D = 51
+
+DEFAULT_R_LOSS_GRID = {
+    "R_loss_min": 0.5e3,
+    "R_loss_max": 5e3,
+    "points_amount": 51,
+}
 
 
 def C_and_C_v_of_f_0_ax(ax, *, cp=DEFAULT_CP, fp=DEFAULT_FP):
@@ -265,7 +275,7 @@ def K_U_of_f_ax(
     ax.axhline(
         -fp.A_threshold,
         **DEFAULT_HELPER_LINE,
-        label=rf"$A_\mathrm{{th}}$ = {fp.A_threshold:.1f} dB",
+        label=rf"$-A_\mathrm{{th}}$ = {-fp.A_threshold:.1f} dB",
     )
 
     return ax
@@ -412,5 +422,157 @@ def A_of_f_0_fig(
     fig, ax = plt.subplots()
     ax = A_of_f_0_ax(ax, R_loss_params=R_loss_params, cp=cp, fp=fp)
     ax.legend(loc="upper right")
+
+    return fig
+
+
+def A_map_of_f_0_ax(
+    ax,
+    *,
+    f_0_points_amount=DEFAULT_POINTS_AMOUNT_FOR_3D,
+    R_loss_grid=DEFAULT_R_LOSS_GRID,
+    cp=DEFAULT_CP,
+    fp=DEFAULT_FP,
+):
+    fp_modified = dataclasses.replace(fp, N=f_0_points_amount)
+    f_0 = model.freq_set(fp=fp_modified)
+    R_loss = np.linspace(
+        R_loss_grid["R_loss_min"],
+        R_loss_grid["R_loss_max"],
+        R_loss_grid["points_amount"],
+    )
+
+    setup_f_ax(ax, fp=fp, step=5e6)
+
+    f_0_coords, R_loss_coords = np.meshgrid(f_0, R_loss)
+
+    cp_modified = dataclasses.replace(cp, R_loss=R_loss_coords)
+
+    A_map = model.A(f_0_coords, cp=cp_modified, fp=fp)
+
+    ax.computed_zorder = False
+
+    custom_norm = TwoSlopeNorm(
+        vmin=min(A_map.min(), fp.A_threshold * 0.9, fp.A_threshold - 1),
+        vcenter=fp.A_threshold,
+        vmax=max(A_map.max(), fp.A_threshold * 1.1, fp.A_threshold + 1),
+    )
+    custom_cmap = LinearSegmentedColormap.from_list(
+        "status", ["tab:red", "white", "tab:green"]
+    )
+
+    A_surface = ax.plot_surface(
+        MHz(f_0_coords),
+        kOhm(R_loss_coords),
+        A_map,
+        norm=custom_norm,
+        cmap=custom_cmap,
+        zorder=1,
+    )
+
+    ax.set_ylabel(r"$R_\mathrm{loss}$, k$\Omega$")
+    ax.set_zlabel(r"$A$, dB")
+
+    A_th_contours = ax.contour(
+        MHz(f_0_coords),
+        kOhm(R_loss_coords),
+        A_map,
+        levels=[fp.A_threshold],
+        zorder=2,
+        linestyle="dashed",
+        colors="black",
+        linewidth=2,
+        label="A threshold",
+    )
+
+    stations_contours = ax.contour(
+        MHz(f_0_coords),
+        kOhm(R_loss_coords),
+        A_map,
+        levels=MHz(np.array(fp.f_stations)),
+        zdir="x",
+        zorder=2,
+        colors="purple",
+        linewidth=2,
+        label="stations",
+    )
+
+    f_stations_coords, R_loss_coords2 = np.meshgrid(np.array(fp.f_stations), R_loss)
+
+    cp_modified2 = dataclasses.replace(cp, R_loss=R_loss_coords2)
+    A_of_R_loss = model.A(f_stations_coords, cp=cp_modified2, fp=fp)
+
+    R_th = np.array(
+        [
+            np.interp(fp.A_threshold, A_col, R_loss, left=np.nan, right=np.nan)
+            for A_col in A_of_R_loss.T
+        ]
+    )
+
+    stations_threshold_markers = ax.plot(
+        MHz(np.array(fp.f_stations)),
+        kOhm(R_th),
+        fp.A_threshold,
+        zorder=3,
+        color="blue",
+        marker="o",
+        linestyle="",
+        label=r"stations $R_\mathrm{loss}$ threshold",
+    )
+
+    A_th_handles, _ = A_th_contours.legend_elements()
+    stations_handles, _ = stations_contours.legend_elements()
+    stations_threshold_markers_handle = stations_threshold_markers[0]
+    A_th_handles[0].set_label(A_th_contours.get_label())
+    stations_handles[0].set_label(stations_contours.get_label())
+    OK_status_handle = mpatches.Patch(color="tab:green", label="OK status")
+    WEAK_status_handle = mpatches.Patch(color="tab:red", label="WEAK status")
+
+    legend_handles = [
+        A_th_handles[0],
+        stations_handles[0],
+        stations_threshold_markers_handle,
+        OK_status_handle,
+        WEAK_status_handle,
+    ]
+
+    return ax, A_surface, legend_handles
+
+
+def A_map_of_f_0_fig(
+    f_0_points_amount=DEFAULT_POINTS_AMOUNT_FOR_3D,
+    R_loss_grid=DEFAULT_R_LOSS_GRID,
+    cp=DEFAULT_CP,
+    fp=DEFAULT_FP,
+):
+    fig, ax = plt.subplots(subplot_kw={"projection": "3d"}, figsize=(4, 6))
+    ax, surface, legend_handles = A_map_of_f_0_ax(
+        ax, f_0_points_amount=f_0_points_amount, R_loss_grid=R_loss_grid, cp=cp, fp=fp
+    )
+    A_threshold_cbar = fig.colorbar(
+        surface, ax=ax, label="A, dB", location="bottom", shrink=0.75, pad=0.1
+    )
+    A_threshold_cbar.ax.axvline(fp.A_threshold, color="black", linewidth=2)
+    x_text_middle_offset = 0.35
+    y_text_offset = 1.2
+
+    A_threshold_cbar.ax.text(
+        0.5 - x_text_middle_offset,
+        y_text_offset,
+        "WEAK",
+        transform=A_threshold_cbar.ax.transAxes,
+        va="bottom",
+        ha="center",
+    )
+    A_threshold_cbar.ax.text(
+        0.5 + x_text_middle_offset,
+        y_text_offset,
+        "OK",
+        transform=A_threshold_cbar.ax.transAxes,
+        va="bottom",
+        ha="center",
+    )
+
+    fig.legend(handles=legend_handles, loc="outside lower center", ncols=2)
 
     return fig
