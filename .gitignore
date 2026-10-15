@@ -34,6 +34,8 @@ desktop.ini
 # контекст Claude
 CLAUDE.md
 
+#vscode workspace settings
+.vscode/settings.json
+
 #custom use script
 main.py
-.vscode/settings.json
