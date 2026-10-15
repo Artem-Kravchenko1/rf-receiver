@@ -559,7 +559,7 @@ def A_map_of_f_0_fig(
     cp=DEFAULT_CP,
     fp=DEFAULT_FP,
 ):
-    fig, ax = plt.subplots(subplot_kw={"projection": "3d"}, figsize=(4, 6))
+    fig, ax = plt.subplots(subplot_kw={"projection": "3d"}, figsize=(5, 6))
     ax, surface, legend_handles = A_map_of_f_0_ax(
         ax, f_0_points_amount=f_0_points_amount, R_loss_grid=R_loss_grid, cp=cp, fp=fp
     )
@@ -588,104 +588,6 @@ def A_map_of_f_0_fig(
     )
 
     fig.legend(handles=legend_handles, loc="outside lower center", ncols=2)
-
-    return fig
-
-
-def dU_df_by_gamma_ax(
-    ax,
-    *,
-    gamma_params=DEFAULT_GAMMA_PARAMS,
-    cp=DEFAULT_CP,
-    cvp=DEFAULT_CVP,
-    fp=DEFAULT_FP,
-):
-    f_0 = model.freq_set(fp=fp)
-    ax = setup_f_ax(ax, fp=fp)
-    ax.set_ylabel(r"$dU_\mathrm{v}/df_0$, V/MHz")
-
-    for gamma in gamma_params:
-        cvp_modified = dataclasses.replace(cvp, gamma=gamma)
-        ax.plot(
-            MHz(f_0),
-            per_MHz(model.dU_df_0(f_0, cp=cp, cvp=cvp_modified)),
-            label=rf"$\gamma$ = {gamma:g}",
-        )
-
-    return ax
-
-
-def dU_df_by_C_par_ax(
-    ax,
-    *,
-    C_par_params=DEFAULT_C_PAR_PARAMS,
-    cp=DEFAULT_CP,
-    cvp=DEFAULT_CVP,
-    fp=DEFAULT_FP,
-):
-    f_0 = model.freq_set(fp=fp)
-    ax = setup_f_ax(ax, fp=fp)
-    ax.set_ylabel(r"$dU_\mathrm{v}/df_0$, V/MHz")
-
-    for C_par in C_par_params:
-        cp_modified = dataclasses.replace(cp, C_par=C_par)
-        ax.plot(
-            MHz(f_0),
-            per_MHz(model.dU_df_0(f_0, cp=cp_modified, cvp=cvp)),
-            label=rf"$C_\mathrm{{par}}$ = {pF(C_par):g} pF",
-        )
-
-    return ax
-
-
-def dU_df_of_f_0_fig(
-    gamma_params=DEFAULT_GAMMA_PARAMS,
-    C_par_params=DEFAULT_C_PAR_PARAMS,
-    cp=DEFAULT_CP,
-    cvp=DEFAULT_CVP,
-    fp=DEFAULT_FP,
-):
-    fig, axs = plt.subplots(2, 1, sharex=True, figsize=(6.7, 6))
-
-    dU_df_by_gamma_ax(axs[0], gamma_params=gamma_params, cp=cp, cvp=cvp, fp=fp)
-    dU_df_by_C_par_ax(axs[1], C_par_params=C_par_params, cp=cp, cvp=cvp, fp=fp)
-
-    for ax in axs:
-        ax.label_outer()
-        ax.legend()
-
-    return fig
-
-
-def U_tol_of_f_0_ax(
-    ax,
-    *,
-    f_tol_params=DEFAULT_F_TOL_PARAMS,
-    cp=DEFAULT_CP,
-    cvp=DEFAULT_CVP,
-    fp=DEFAULT_FP,
-):
-    f_0 = model.freq_set(fp=fp)
-    ax = setup_f_ax(ax, fp=fp)
-    ax.set_ylabel(r"$U_\mathrm{tol}$, mV")
-
-    for f_tol in f_tol_params:
-        fp_modified = dataclasses.replace(fp, f_tol=f_tol)
-        ax.plot(
-            MHz(f_0),
-            mV(model.U_tol(f_0, cp=cp, fp=fp_modified, cvp=cvp)),
-            label=rf"$f_\mathrm{{tol}}$ = {f_tol * 1e-3:g} kHz",
-        )
-
-    return ax
-
-
-def U_tol_of_f_0_fig(
-    f_tol_params=DEFAULT_F_TOL_PARAMS, cp=DEFAULT_CP, cvp=DEFAULT_CVP, fp=DEFAULT_FP
-):
-    fig, ax = plt.subplots()
-    ax = U_tol_of_f_0_ax(ax, f_tol_params=f_tol_params, cp=cp, cvp=cvp, fp=fp)
-    ax.legend()
 
     return fig
 
@@ -749,5 +651,103 @@ def A_status_table_fig(
 ):
     fig, ax = plt.subplots()
     ax = A_status_table_ax(ax, R_loss_params=R_loss_params, cp=cp, fp=fp)
+
+    return fig
+
+
+def dU_df_by_gamma_ax(
+    ax,
+    *,
+    gamma_params=DEFAULT_GAMMA_PARAMS,
+    cp=DEFAULT_CP,
+    cvp=DEFAULT_CVP,
+    fp=DEFAULT_FP,
+):
+    f_0 = model.freq_set(fp=fp)
+    ax = setup_f_ax(ax, fp=fp)
+    ax.set_ylabel(r"$\mathrm{d}U_\mathrm{v}\,/\,\mathrm{d}f_0$, V/MHz")
+
+    for gamma in gamma_params:
+        cvp_modified = dataclasses.replace(cvp, gamma=gamma)
+        ax.plot(
+            MHz(f_0),
+            per_MHz(model.dU_df_0(f_0, cp=cp, cvp=cvp_modified)),
+            label=rf"$\gamma$ = {gamma:g}",
+        )
+
+    return ax
+
+
+def dU_df_by_C_par_ax(
+    ax,
+    *,
+    C_par_params=DEFAULT_C_PAR_PARAMS,
+    cp=DEFAULT_CP,
+    cvp=DEFAULT_CVP,
+    fp=DEFAULT_FP,
+):
+    f_0 = model.freq_set(fp=fp)
+    ax = setup_f_ax(ax, fp=fp)
+    ax.set_ylabel(r"$\mathrm{d}U_\mathrm{v}\,/\,\mathrm{d}f_0$, V/MHz")
+
+    for C_par in C_par_params:
+        cp_modified = dataclasses.replace(cp, C_par=C_par)
+        ax.plot(
+            MHz(f_0),
+            per_MHz(model.dU_df_0(f_0, cp=cp_modified, cvp=cvp)),
+            label=rf"$C_\mathrm{{par}}$ = {pF(C_par):g} pF",
+        )
+
+    return ax
+
+
+def dU_df_of_f_0_fig(
+    gamma_params=DEFAULT_GAMMA_PARAMS,
+    C_par_params=DEFAULT_C_PAR_PARAMS,
+    cp=DEFAULT_CP,
+    cvp=DEFAULT_CVP,
+    fp=DEFAULT_FP,
+):
+    fig, axs = plt.subplots(2, 1, sharex=True, figsize=(6.7, 6))
+
+    dU_df_by_gamma_ax(axs[0], gamma_params=gamma_params, cp=cp, cvp=cvp, fp=fp)
+    dU_df_by_C_par_ax(axs[1], C_par_params=C_par_params, cp=cp, cvp=cvp, fp=fp)
+
+    for ax in axs:
+        ax.label_outer()
+        ax.legend()
+
+    return fig
+
+
+def U_tol_of_f_0_ax(
+    ax,
+    *,
+    f_tol_params=DEFAULT_F_TOL_PARAMS,
+    cp=DEFAULT_CP,
+    cvp=DEFAULT_CVP,
+    fp=DEFAULT_FP,
+):
+    f_0 = model.freq_set(fp=fp)
+    ax = setup_f_ax(ax, fp=fp)
+    ax.set_ylabel(r"$U_\mathrm{tol}$, mV")
+
+    for f_tol in f_tol_params:
+        fp_modified = dataclasses.replace(fp, f_tol=f_tol)
+        ax.plot(
+            MHz(f_0),
+            mV(model.U_tol(f_0, cp=cp, fp=fp_modified, cvp=cvp)),
+            label=rf"$f_\mathrm{{tol}}$ = {f_tol * 1e-3:g} kHz",
+        )
+
+    return ax
+
+
+def U_tol_of_f_0_fig(
+    f_tol_params=DEFAULT_F_TOL_PARAMS, cp=DEFAULT_CP, cvp=DEFAULT_CVP, fp=DEFAULT_FP
+):
+    fig, ax = plt.subplots()
+    ax = U_tol_of_f_0_ax(ax, f_tol_params=f_tol_params, cp=cp, cvp=cvp, fp=fp)
+    ax.legend()
 
     return fig
