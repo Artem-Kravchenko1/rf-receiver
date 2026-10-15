@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import numpy as np
 from matplotlib.ticker import MaxNLocator, MultipleLocator
 
 from fm_receiver.model import DEFAULT_FP
@@ -34,6 +35,10 @@ def pF(C):
 
 def kOhm(R):
     return R * 1e-3
+
+
+def dB(x):
+    return 20 * np.log10(x)
 
 
 def setup_f_ax(
