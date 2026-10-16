@@ -1,12 +1,17 @@
 from pathlib import Path
 
 import matplotlib.pyplot as plt
+from matplotlib.animation import PillowWriter
 
-from fm_receiver import data, plots
+from fm_receiver import animation, data, plots
 from fm_receiver.plot_style.style import STYLE_PATH
 
 DEFAULT_FIGURES_SAVE_PATH = Path("results") / "figures"
 DEFAULT_DATA_SAVE_PATH = Path("results") / "data"
+DEFAULT_ANIMATIONS_SAVE_PATH = Path("results") / "animations"
+
+ANIMATION_FPS = 8
+ANIMATION_DPI = 100
 
 FIGURES_DICT = {
     "C_fig": plots.C_and_C_v_of_f_0_fig,
@@ -50,6 +55,24 @@ def export_all_data(save_path: Path = DEFAULT_DATA_SAVE_PATH):
         df_normalized.to_csv(save_path / (data_name + "_normalized.csv"))
 
 
+def export_animation(
+    save_path: Path = DEFAULT_ANIMATIONS_SAVE_PATH,
+    frames_amount=animation.DEFAULT_FRAMES_AMOUNT,
+):
+    save_path = Path(save_path)
+    save_path.mkdir(parents=True, exist_ok=True)
+
+    with plt.style.context(STYLE_PATH):
+        fig, anim = animation.K_U_sweep_animation(frames_amount=frames_amount)
+        anim.save(
+            save_path / "K_U_sweep.gif",
+            writer=PillowWriter(fps=ANIMATION_FPS),
+            dpi=ANIMATION_DPI,
+        )
+        plt.close(fig)
+
+
 if __name__ == "__main__":
     export_all_figures()
     export_all_data()
+    export_animation()
