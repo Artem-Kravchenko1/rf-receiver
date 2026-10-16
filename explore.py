@@ -7,16 +7,34 @@ app = marimo.App(width="medium", app_title="FM Receiver: varicap tuning")
 
 
 @app.cell
-def _():
+async def _():
     import dataclasses
+    import importlib
+    import sys
 
     import marimo as mo
     import numpy as np
+    import pandas  # noqa: F401  -- needed by fm_receiver.data; listed so the browser loads it
     import plotly.graph_objects as go
     from plotly.subplots import make_subplots
 
-    from fm_receiver import data, model
-    from fm_receiver.units import MHz, dB, mV, per_MHz
+    if "pyodide" in sys.modules:
+        # GitHub Pages: Python runs in the browser, the package is shipped as a zip next to the page
+        import io
+        import zipfile
+
+        from pyodide.http import pyfetch
+
+        _package_dir = "/home/pyodide/fm_receiver_pkg"
+        _response = await pyfetch(str(mo.notebook_location() / "public" / "fm_receiver.zip"))
+        zipfile.ZipFile(io.BytesIO(await _response.bytes())).extractall(_package_dir)
+        sys.path.insert(0, _package_dir)
+
+    # importlib instead of `import fm_receiver`, so the browser does not look for it on PyPI
+    data = importlib.import_module("fm_receiver.data")
+    model = importlib.import_module("fm_receiver.model")
+    _units = importlib.import_module("fm_receiver.units")
+    MHz, dB, mV, per_MHz = _units.MHz, _units.dB, _units.mV, _units.per_MHz
 
     return (
         MHz,
