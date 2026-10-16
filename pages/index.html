@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FM Receiver — варикапне налаштування</title>
+  <style>
+    :root {
+      --bg: #ffffff; --fg: #1d1d1f; --muted: #5f6368; --card: #f5f6f8; --line: #e1e3e6; --accent: #1f6feb;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg: #111317; --fg: #e8eaed; --muted: #9aa0a6; --card: #1a1d22; --line: #2b2f36; --accent: #58a6ff; }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--fg);
+           font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    main { max-width: 960px; margin: 0 auto; padding: 32px 16px 64px; }
+    h1 { font-size: 1.8rem; margin: 0 0 8px; }
+    h2 { font-size: 1.2rem; margin: 40px 0 12px; }
+    p { margin: 0 0 12px; }
+    .muted { color: var(--muted); }
+    a { color: var(--accent); }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-top: 20px; }
+    .card { display: block; padding: 16px; border: 1px solid var(--line); border-radius: 10px;
+            background: var(--card); color: inherit; text-decoration: none; }
+    .card:hover { border-color: var(--accent); }
+    .card strong { display: block; margin-bottom: 4px; }
+    img { max-width: 100%; height: auto; border-radius: 8px; background: #fff; }
+    .gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+    footer { margin-top: 48px; font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Варикапне налаштування вхідного контуру FM-приймача</h1>
+  <p class="muted">Діапазон 88–108 МГц · розрахунково-графічна робота, КПІ ім. Ігоря Сікорського, РТФ, група РЕ-41</p>
+  <p>
+    Напруга налаштування варикапа, вибірковість контуру, пригнічення дзеркального каналу та вимоги до
+    точності джерела напруги. Усі результати на цій сторінці автоматично збираються з однієї програмної моделі
+    після кожної зміни коду.
+  </p>
+
+  <div class="cards">
+    <a class="card" href="notes/">
+      <strong>Інтерактивний конспект</strong>
+      <span class="muted">Повзунки параметрів, живі графіки й висновок. Python працює просто в браузері,
+        перше завантаження — до хвилини.</span>
+    </a>
+    <a class="card" href="report.docx">
+      <strong>Звіт (Word)</strong>
+      <span class="muted">Модель, 11 рисунків, таблиці, висновки — 13 сторінок.</span>
+    </a>
+    <a class="card" href="https://github.com/Artem-Kravchenko1/rf-receiver">
+      <strong>Код на GitHub</strong>
+      <span class="muted">Модель, тести, збірка однією командою <code>uv run fm-build</code>.</span>
+    </a>
+  </div>
+
+  <h2>Перебудова АЧХ</h2>
+  <img src="animations/K_U_sweep.gif" alt="АЧХ контуру при перебудові від 88 до 108 МГц з маркером дзеркального каналу">
+
+  <h2>Основні графіки</h2>
+  <div class="gallery">
+    <img src="figures/U_v_fig.png" alt="Напруга налаштування">
+    <img src="figures/K_U_fig.png" alt="АЧХ і пригнічення дзеркального каналу">
+    <img src="figures/A_fig.png" alt="Пригнічення дзеркального каналу">
+    <img src="figures/A_status_table_fig.png" alt="Статуси станцій">
+  </div>
+
+  <h2>Дані</h2>
+  <p>
+    Таблиці CSV:
+    <a href="data/f_stations_data_normalized.csv">станції</a>,
+    <a href="data/f_grid_data_normalized.csv">сітка частот</a>,
+    <a href="data/model_params_data_normalized.csv">вихідні дані</a>
+    <span class="muted">(версії в одиницях СІ — без суфікса <code>_normalized</code>)</span>.
+  </p>
+
+  <footer class="muted">Python · NumPy · SymPy · pandas · Matplotlib · Plotly · marimo · Quarto</footer>
+</main>
+</body>
+</html>
