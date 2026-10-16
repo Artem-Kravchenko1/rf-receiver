@@ -15,15 +15,16 @@ async def _():
     import marimo as mo
     import numpy as np
     import pandas  # noqa: F401  -- needed by fm_receiver.data; listed so the browser loads it
-    import plotly.graph_objects as go
-    from plotly.subplots import make_subplots
 
     if "pyodide" in sys.modules:
         # GitHub Pages: Python runs in the browser, the package is shipped as a zip next to the page
         import io
         import zipfile
 
+        import micropip
         from pyodide.http import pyfetch
+
+        await micropip.install("plotly")  # not bundled with Pyodide, comes from PyPI
 
         _package_dir = "/home/pyodide/fm_receiver_pkg"
         _response = await pyfetch(
@@ -31,6 +32,9 @@ async def _():
         )
         zipfile.ZipFile(io.BytesIO(await _response.bytes())).extractall(_package_dir)
         sys.path.insert(0, _package_dir)
+
+    import plotly.graph_objects as go
+    from plotly.subplots import make_subplots
 
     # importlib instead of `import fm_receiver`, so the browser does not look for it on PyPI
     data = importlib.import_module("fm_receiver.data")
@@ -108,7 +112,7 @@ def _(mo, model):
     _cp, _cvp, _fp = model.DEFAULT_CP, model.DEFAULT_CVP, model.DEFAULT_FP
 
     L_slider = mo.ui.slider(
-        0.08, 0.12, 0.005, value=_cp.L * 1e6, label="L, μH", show_value=True
+        0.08, 0.12, 0.005, value=round(_cp.L * 1e6, 3), label="L, μH", show_value=True
     )
     R_loss_slider = mo.ui.slider(
         0.5, 10, 0.1, value=_cp.R_loss * 1e-3, label="R_loss, kΩ", show_value=True
