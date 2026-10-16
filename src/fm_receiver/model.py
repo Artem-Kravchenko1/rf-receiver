@@ -85,7 +85,7 @@ def A(f_0, cp: CircuitParameters = DEFAULT_CP, fp: FrequencyParameters = DEFAULT
     return 20 * np.log10(1 / K_U(f_im(f_0, fp), f_0, cp))
 
 
-def station_status(
+def f_0_status(
     f_0, cp: CircuitParameters = DEFAULT_CP, fp: FrequencyParameters = DEFAULT_FP
 ):
     return np.where(A(f_0, cp, fp) >= fp.A_threshold, "OK", "WEAK")
