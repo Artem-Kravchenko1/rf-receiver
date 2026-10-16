@@ -37,9 +37,6 @@ def freq_set(fp: FrequencyParameters = DEFAULT_FP):
     return np.linspace(fp.f_min, fp.f_max, fp.N)
 
 
-f_set = freq_set()
-
-
 def C_total(f_0, cp: CircuitParameters = DEFAULT_CP):
     res_C = 1 / (4 * np.pi**2 * f_0**2 * cp.L)
     return np.where(res_C > cp.C_par, res_C, np.nan)
