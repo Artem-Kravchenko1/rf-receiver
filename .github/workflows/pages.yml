@@ -31,7 +31,7 @@ jobs:
           cp pages/index.html report.docx site/
           cp -r results/figures results/data results/animations site/
           uv run marimo export html-wasm explore.py -o site/notes --mode run
-          rm -f site/notes/CLAUDE.md  # marimo's bundled AI-assistant notes, not needed on the site
+          rm -f site/notes/*.md  # marimo bundles a notes file, not needed on the site
           mkdir -p site/notes/public
           (cd src && zip -qr ../site/notes/public/fm_receiver.zip fm_receiver -x "*__pycache__*")
 
