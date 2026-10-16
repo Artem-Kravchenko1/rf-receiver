@@ -39,3 +39,6 @@ CLAUDE.md
 
 #custom use script
 main.py
+
+/.quarto/
+**/*.quarto_ipynb
