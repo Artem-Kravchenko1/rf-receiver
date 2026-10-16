@@ -47,10 +47,7 @@ def export_all_data(save_path: Path = DEFAULT_DATA_SAVE_PATH):
     for data_name, data_func in DATA_DICT.items():
         df, df_normalized = data_func()
         df.to_csv(save_path / (data_name + ".csv"))
-        df_normalized.to_csv(
-            save_path / (data_name + "_normalized.csv"),
-            float_format="%.3g",
-        )
+        df_normalized.to_csv(save_path / (data_name + "_normalized.csv"))
 
 
 if __name__ == "__main__":

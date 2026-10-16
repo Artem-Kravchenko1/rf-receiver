@@ -71,6 +71,9 @@ def f_grid_data(f_grid=None, fp=DEFAULT_FP, cp=DEFAULT_CP, cvp=DEFAULT_CVP):
     df_normalized.index = MHz(df_normalized.index)
     df_normalized.index.name = "f 0, MHz"
 
+    df_normalized.index = df_normalized.index.round(3)
+    df_normalized = df_normalized.round(3)
+
     return df, df_normalized
 
 
@@ -118,5 +121,8 @@ def model_params_data(fp=DEFAULT_FP, cp=DEFAULT_CP, cvp=DEFAULT_CVP):
         index={old: new for old, (new, _) in conversions.items()},
         columns={values_col_name: values_normalized_col_name},
     )
+
+    df_normalized.index = df_normalized.index.round(3)
+    df_normalized = df_normalized.round(3)
 
     return df, df_normalized
