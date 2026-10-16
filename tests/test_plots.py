@@ -7,7 +7,8 @@ from matplotlib.figure import Figure
 
 from fm_receiver import export, plots
 from fm_receiver.model import DEFAULT_CP, DEFAULT_CVP, DEFAULT_FP
-from fm_receiver.plot_style.style import STYLE_PATH, dB, setup_f_ax
+from fm_receiver.plot_style.style import STYLE_PATH, setup_f_ax
+from fm_receiver.units import dB
 
 
 @pytest.mark.parametrize("fig_func", export.FIGURES_DICT.values())

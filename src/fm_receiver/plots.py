@@ -13,13 +13,15 @@ from fm_receiver.plot_style.style import (
     DEFAULT_ANOT_ARROW,
     DEFAULT_BBOX,
     DEFAULT_HELPER_LINE,
+    setup_f_ax,
+)
+from fm_receiver.units import (
     MHz,
     dB,
     kOhm,
     mV,
     per_MHz,
     pF,
-    setup_f_ax,
 )
 
 DEFAULT_F_GRID = {
@@ -600,7 +602,7 @@ def A_status_table_ax(
 
     cp_modified = dataclasses.replace(cp, R_loss=R_loss)
     A_table = model.A(stations_f, cp=cp_modified, fp=fp)
-    status_table = model.station_status(stations_f, cp=cp_modified, fp=fp)
+    status_table = model.f_0_status(stations_f, cp=cp_modified, fp=fp)
 
     ax.imshow(
         A_table,

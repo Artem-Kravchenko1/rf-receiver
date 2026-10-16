@@ -1,9 +1,9 @@
 from pathlib import Path
 
-import numpy as np
 from matplotlib.ticker import MaxNLocator, MultipleLocator
 
 from fm_receiver.model import DEFAULT_FP
+from fm_receiver.units import MHz
 
 STYLE_PATH = Path(__file__).parent / "style.mplstyle"
 
@@ -28,30 +28,6 @@ DEFAULT_MAJOR_LOCATOR_PARAMS = {
     "nbins": 10,
     "steps": [1, 2, 2.5, 5, 10],
 }
-
-
-def MHz(f):
-    return f * 1e-6
-
-
-def pF(C):
-    return C * 1e12
-
-
-def kOhm(R):
-    return R * 1e-3
-
-
-def dB(x):
-    return 20 * np.log10(x)
-
-
-def mV(U):
-    return U * 1e3
-
-
-def per_MHz(x):
-    return x * 1e6
 
 
 def setup_f_ax(
