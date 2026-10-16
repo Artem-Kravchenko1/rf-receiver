@@ -27,3 +27,6 @@ dev = [
     "python-docx>=1.2.0",
     "ruff>=0.16.10",
 ]
+
+[tool.marimo.runtime]
+auto_instantiate = true
