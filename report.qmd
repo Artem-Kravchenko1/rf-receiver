@@ -1,0 +1,343 @@
+---
+lang: uk
+format:
+  docx:
+    reference-doc: template.docx
+    number-sections: true
+    fig-dpi: 200
+    fig-width: 6.7
+    fig-height: 4
+execute:
+  echo: false
+  warning: false
+crossref:
+  fig-title: "Рисунок"
+  tbl-title: "Таблиця"
+  eq-title: "Формула"
+  title-delim: " –"
+  fig-prefix: "рис."
+  tbl-prefix: "табл."
+  eq-prefix: "формула"
+tbl-cap-location: top
+fig-cap-location: bottom
+jupyter: python3
+---
+
+```{python}
+import dataclasses
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+from fm_receiver import data, model, plots
+from fm_receiver import symulate_model as sym
+from fm_receiver.plot_style.style import STYLE_PATH
+from fm_receiver.units import MHz, mV, per_MHz, pF
+
+plt.style.use(STYLE_PATH)
+
+cp, cvp, fp = model.DEFAULT_CP, model.DEFAULT_CVP, model.DEFAULT_FP
+f_0 = model.freq_set(fp)
+stations = np.array(fp.f_stations)
+
+
+def fmt(value):
+    if isinstance(value, (float, np.floating)):
+        return f"{value:.4g}"
+    return str(value)
+
+
+def md_table(df, index_label):
+    header = [index_label, *df.columns]
+    lines = [
+        "| " + " | ".join(header) + " |",
+        "|" + "|".join([":-:"] * len(header)) + "|",
+    ]
+    for index, row in df.iterrows():
+        lines.append("| " + " | ".join(fmt(v) for v in [index, *row]) + " |")
+    return "\n".join(lines)
+
+
+# numbers used in the text
+U_min, U_max = model.U_v(np.array([fp.f_min, fp.f_max]), cp, cvp)
+Q_min, Q_max = model.Q(np.array([fp.f_max, fp.f_min]), cp)
+BW_min, BW_max = MHz(model.BW(np.array([fp.f_min, fp.f_max]), cp))
+U_tol_min, U_tol_max = mV(model.U_tol(np.array([fp.f_min, fp.f_max]), cp, fp, cvp))
+
+_, stations_table = data.f_stations_data(fp=fp, cp=cp, cvp=cvp)
+A_stations = stations_table["A, dB"]
+worst_f = A_stations.idxmin()
+worst_margin = A_stations.min() - fp.A_threshold
+all_OK = (stations_table["status"] == "OK").all()
+
+delta_min = 100 * sym.delta_xi_norm_func(model.f_im(fp.f_max, fp), fp.f_max)
+delta_max = 100 * sym.delta_xi_norm_func(model.f_im(fp.f_min, fp), fp.f_min)
+
+R_th = [
+    np.interp(
+        fp.A_threshold,
+        model.A(f, dataclasses.replace(cp, R_loss=np.linspace(0.5e3, 5e3, 4501)), fp),
+        np.linspace(0.5e3, 5e3, 4501),
+    )
+    for f in (stations[0], stations[-1])
+]
+```
+
+::: {custom-style="Centered"}
+МІНІСТЕРСТВО ОСВІТИ І НАУКИ УКРАЇНИ
+
+[Назва університету]
+
+[Назва факультету / інституту]
+
+[Назва кафедри]
+
+&nbsp;
+
+&nbsp;
+
+**РОЗРАХУНКОВО-ГРАФІЧНА РОБОТА**
+
+з дисципліни «[Назва дисципліни]»
+
+на тему: **«Варикапне налаштування вхідного контуру FM-приймача діапазону 88–108 МГц»**
+
+&nbsp;
+
+&nbsp;
+
+Виконав: студент групи РЕ-41 [ПІБ студента]
+
+Перевірив: [посада, ПІБ викладача]
+
+&nbsp;
+
+&nbsp;
+
+Київ – [рік]
+:::
+
+{{< pagebreak >}}
+
+::: {custom-style="TOC Heading"}
+ЗМІСТ
+:::
+
+```{=openxml}
+<w:p><w:r><w:fldChar w:fldCharType="begin" w:dirty="true"/></w:r><w:r><w:instrText xml:space="preserve">TOC \o "1-3" \h \z \u</w:instrText></w:r><w:r><w:fldChar w:fldCharType="separate"/></w:r><w:r><w:t>Щоб оновити зміст: правою кнопкою миші → «Оновити поле».</w:t></w:r><w:r><w:fldChar w:fldCharType="end"/></w:r></w:p>
+```
+
+{{< pagebreak >}}
+
+# Завдання і вихідні дані
+
+Потрібно розрахувати варикапне налаштування вхідного контуру супергетеродинного FM-приймача
+діапазону `{python} f"{MHz(fp.f_min):g}"`–`{python} f"{MHz(fp.f_max):g}"` МГц: напругу керування
+варикапом для кожної частоти налаштування, вибірковість контуру, пригнічення дзеркального каналу
+та вимоги до точності джерела напруги, а також перевірити, чи задовольняють станції діапазону
+критерій пригнічення $A \ge A_\mathrm{th}$.
+
+Вихідні дані наведено в @tbl-params.
+
+```{python}
+#| label: tbl-params
+#| tbl-cap: "Вихідні дані"
+#| output: asis
+_, params_table = data.model_params_data(fp=fp, cp=cp, cvp=cvp)
+print(md_table(params_table.rename(columns={"Value": "Значення"}), "Параметр"))
+```
+
+Станції діапазону: `{python} ", ".join(f"{MHz(f):g}" for f in stations)` МГц.
+
+# Модель контуру
+
+Вхідний контур — паралельний коливальний контур $R_\mathrm{loss} \parallel L \parallel C_\mathrm{par} \parallel C_v(U)$,
+який живиться від джерела струму. Тут $R_\mathrm{loss}$ — еквівалентний опір втрат,
+$C_\mathrm{par}$ — паразитна ємність, $C_v(U)$ — ємність варикапа, керована напругою $U$.
+
+Резонансна частота контуру визначає необхідну загальну ємність і ємність варикапа:
+
+$$C(f_0) = \frac{1}{4\pi^2 f_0^2 L}, \qquad C_v(f_0) = C(f_0) - C_\mathrm{par}.$$ {#eq-c}
+
+Вольт-фарадна характеристика варикапа та обернена до неї залежність напруги налаштування від частоти:
+
+$$C_v(U) = \frac{C_{v0}}{(1 + U/\varphi)^\gamma}
+\quad\Rightarrow\quad
+U(f_0) = \varphi\left[\left(\frac{C_{v0}}{C_v(f_0)}\right)^{1/\gamma} - 1\right].$$ {#eq-u}
+
+Імпеданс контуру та його нормована АЧХ:
+
+$$Z(f) = \frac{1}{1/R_\mathrm{loss} + j2\pi f C + 1/(j2\pi f L)}, \qquad
+K_U(f) = \frac{|Z(f)|}{|Z(f_0)|} = \frac{1}{\sqrt{1 + \xi^2}},$$ {#eq-k}
+
+де узагальнена розстройка, добротність і смуга пропускання:
+
+$$\xi = Q\left(\frac{f}{f_0} - \frac{f_0}{f}\right), \qquad Q = 2\pi f_0 C R_\mathrm{loss}, \qquad BW = \frac{f_0}{Q}.$$ {#eq-q}
+
+Частота дзеркального каналу при $f_\mathrm{LO} > f_0$ та його пригнічення контуром:
+
+$$f_\mathrm{im} = f_0 + 2 f_\mathrm{IF}, \qquad A = 10 \lg\left(1 + \xi(f_\mathrm{im})^2\right), \text{ дБ}.$$ {#eq-a}
+
+Допуск напруги, за якого похибка налаштування не перевищує $f_\mathrm{tol}$, визначається
+крутістю характеристики налаштування:
+
+$$U_\mathrm{tol} = \frac{dU}{df_0} f_\mathrm{tol}, \qquad
+\frac{dU}{df_0} = \frac{\varphi}{\gamma}\left(\frac{C_{v0}}{C_v}\right)^{1/\gamma} \frac{2C}{f_0 C_v}.$$ {#eq-utol}
+
+Формули перевірено символьно (SymPy): вираз для смуги з меж за рівнем $1/\sqrt2$ тотожно
+дорівнює $f_0/Q$, а аналітична похідна @eq-utol збігається з чисельною (центральна різниця)
+з відносною похибкою менше $10^{-9}$.
+
+# Налаштування контуру
+
+Залежності ємностей від частоти налаштування показано на @fig-c. Ємність варикапа
+відрізняється від загальної на сталу паразитну ємність $C_\mathrm{par}$ = `{python} f"{pF(cp.C_par):g}"` пФ.
+
+```{python}
+#| label: fig-c
+#| fig-cap: "Залежність загальної ємності контуру і ємності варикапа від частоти налаштування"
+plots.C_and_C_v_of_f_0_fig(cp=cp, fp=fp);
+```
+
+Напруга налаштування (@fig-u) змінюється від `{python} f"{U_min:.2f}"` В на нижньому краю діапазону
+до `{python} f"{U_max:.2f}"` В на верхньому. Характеристика опукла: зі зростанням частоти
+напруга зростає швидше.
+
+```{python}
+#| label: fig-u
+#| fig-cap: "Напруга налаштування варикапа та робочі точки станцій"
+plots.U_v_of_f_0_fig(cp=cp, cvp=cvp, fp=fp);
+```
+
+# Вибірковість контуру
+
+Модуль і фаза імпедансу контуру для трьох частот налаштування наведено на @fig-z.
+На резонансі $|Z| = R_\mathrm{loss}$, а фаза дорівнює нулю; нижче резонансу контур має
+індуктивний характер, вище — ємнісний.
+
+```{python}
+#| label: fig-z
+#| fig-cap: "Модуль і фаза імпедансу контуру"
+#| fig-height: 6
+plots.Z_of_f_fig(cp=cp, fp=fp);
+```
+
+АЧХ контуру в децибелах з позначеними частотами дзеркального каналу показано на @fig-ku.
+
+```{python}
+#| label: fig-ku
+#| fig-cap: "АЧХ контуру та пригнічення дзеркального каналу"
+plots.K_U_of_f_fig(cp=cp, fp=fp);
+```
+
+Добротність контуру при сталому $R_\mathrm{loss}$ спадає з частотою від `{python} f"{Q_max:.1f}"`
+до `{python} f"{Q_min:.1f}"`, тому смуга пропускання розширюється від `{python} f"{BW_min:.2f}"`
+до `{python} f"{BW_max:.2f}"` МГц (@fig-q, @fig-bw).
+
+```{python}
+#| label: fig-q
+#| fig-cap: "Добротність контуру для різних опорів втрат"
+plots.Q_of_f_0_fig(cp=cp, fp=fp);
+```
+
+```{python}
+#| label: fig-bw
+#| fig-cap: "Смуга пропускання контуру для різних опорів втрат"
+plots.BW_of_f_0_fig(cp=cp, fp=fp);
+```
+
+# Пригнічення дзеркального каналу
+
+Пригнічення дзеркального каналу залежно від частоти налаштування та опору втрат показано на
+@fig-a. Через спадання добротності воно погіршується до верхнього краю діапазону.
+
+```{python}
+#| label: fig-a
+#| fig-cap: "Пригнічення дзеркального каналу для різних опорів втрат"
+plots.A_of_f_0_fig(cp=cp, fp=fp);
+```
+
+Узагальнену розстройку на частоті дзеркального каналу розраховано точно. Наближення
+$\xi \approx 2Q\,\Delta f / f_0$ тут невалідне: його відносна похибка дорівнює
+$f_\mathrm{IF}/(f_0 + f_\mathrm{IF})$, тобто від `{python} f"{delta_min:.1f}"` %
+до `{python} f"{delta_max:.1f}"` % у діапазоні, і наближення завищує пригнічення.
+
+Межу між статусами OK і WEAK у площині «частота налаштування — опір втрат» показано на @fig-map,
+а статуси станцій для кількох значень $R_\mathrm{loss}$ — на @fig-status. Мінімальний опір втрат,
+за якого станція ще задовольняє критерій, становить `{python} f"{R_th[0]:.0f}"` Ом для
+`{python} f"{MHz(stations[0]):g}"` МГц і `{python} f"{R_th[1]:.0f}"` Ом для
+`{python} f"{MHz(stations[-1]):g}"` МГц.
+
+```{python}
+#| label: fig-map
+#| fig-cap: "Пригнічення дзеркального каналу залежно від частоти налаштування та опору втрат"
+#| fig-width: 5
+#| fig-height: 6
+plots.A_map_of_f_0_fig(cp=cp, fp=fp);
+```
+
+```{python}
+#| label: fig-status
+#| fig-cap: "Статуси станцій для різних опорів втрат (рамкою виділено розрахунковий режим)"
+plots.A_status_table_fig(cp=cp, fp=fp);
+```
+
+Результати розрахунку для станцій діапазону наведено в @tbl-stations.
+
+```{python}
+#| label: tbl-stations
+#| tbl-cap: "Результати розрахунку для станцій"
+#| output: asis
+_columns = {
+    "U var, V": "U, В",
+    "Q": "Q",
+    "BW, MHz": "BW, МГц",
+    "f im, MHz": "f_im, МГц",
+    "A, dB": "A, дБ",
+    "status": "Статус",
+    "U tol, mV": "U_tol, мВ",
+}
+print(md_table(stations_table[list(_columns)].rename(columns=_columns), "f₀, МГц"))
+```
+
+# Вимоги до джерела напруги
+
+Крутість характеристики налаштування для різних типів варикапа (показник $\gamma$) та різних
+паразитних ємностей показано на @fig-du. Допуск напруги для кількох значень $f_\mathrm{tol}$ — на
+@fig-utol. При $f_\mathrm{tol}$ = `{python} f"{fp.f_tol * 1e-3:g}"` кГц похибка джерела напруги не має
+перевищувати `{python} f"{U_tol_min:.1f}"` мВ на нижньому краю діапазону та
+`{python} f"{U_tol_max:.1f}"` мВ на верхньому.
+
+```{python}
+#| label: fig-du
+#| fig-cap: "Крутість характеристики налаштування для різних γ і C_par"
+#| fig-height: 6
+plots.dU_df_of_f_0_fig(cp=cp, cvp=cvp, fp=fp);
+```
+
+```{python}
+#| label: fig-utol
+#| fig-cap: "Допуск напруги налаштування для різних допусків частоти"
+plots.U_tol_of_f_0_fig(cp=cp, cvp=cvp, fp=fp);
+```
+
+# Висновки
+
+1. Для перебудови контуру в діапазоні `{python} f"{MHz(fp.f_min):g}"`–`{python} f"{MHz(fp.f_max):g}"` МГц
+   напруга на варикапі має змінюватися від `{python} f"{U_min:.2f}"` до `{python} f"{U_max:.2f}"` В.
+2. Добротність контуру спадає з `{python} f"{Q_max:.1f}"` до `{python} f"{Q_min:.1f}"`, смуга пропускання
+   розширюється з `{python} f"{BW_min:.2f}"` до `{python} f"{BW_max:.2f}"` МГц.
+3. `{python} "Усі станції задовольняють критерій" if all_OK else "Не всі станції задовольняють критерій"`
+   $A \ge$ `{python} f"{fp.A_threshold:g}"` дБ; найменший запас — `{python} f"{worst_margin:.1f}"` дБ
+   на частоті `{python} f"{worst_f:g}"` МГц.
+4. Робота залишається задовільною, доки опір втрат не менший за ≈`{python} f"{R_th[1]:.0f}"` Ом
+   (визначає верхня станція діапазону).
+5. Похибка джерела напруги налаштування не повинна перевищувати `{python} f"{U_tol_min:.1f}"` мВ
+   (за допуску частоти `{python} f"{fp.f_tol * 1e-3:g}"` кГц).
+
+# Програмна реалізація {.unnumbered}
+
+Усі розрахунки, графіки й таблиці цього звіту отримано з програмної моделі на Python
+(NumPy, SymPy, pandas, Matplotlib); звіт зібрано Quarto безпосередньо з коду, тому всі числа в
+тексті відповідають моделі. Код, тести та інтерактивний конспект (marimo) розміщено в репозиторії
+проєкту. Анімацію перебудови АЧХ збережено у файлі `results/animations/K_U_sweep.gif`.
