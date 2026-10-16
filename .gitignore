@@ -31,8 +31,6 @@ Thumbs.db
 desktop.ini
 ~$*
 
-# контекст Claude
-CLAUDE.md
 
 #vscode workspace settings
 .vscode/settings.json
