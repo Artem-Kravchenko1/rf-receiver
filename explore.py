@@ -26,7 +26,9 @@ async def _():
         from pyodide.http import pyfetch
 
         _package_dir = "/home/pyodide/fm_receiver_pkg"
-        _response = await pyfetch(str(mo.notebook_location() / "public" / "fm_receiver.zip"))
+        _response = await pyfetch(
+            str(mo.notebook_location() / "public" / "fm_receiver.zip")
+        )
         zipfile.ZipFile(io.BytesIO(await _response.bytes())).extractall(_package_dir)
         sys.path.insert(0, _package_dir)
 
