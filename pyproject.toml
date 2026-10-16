@@ -16,6 +16,9 @@ dependencies = [
     "sympy>=1.14.0",
 ]
 
+[project.scripts]
+fm-build = "fm_receiver.build:main"
+
 [build-system]
 requires = ["uv_build>=0.12.24,<0.13.0"]
 build-backend = "uv_build"
@@ -25,5 +28,9 @@ dev = [
     "jupyter>=1.1.1",
     "pytest>=9.1.1",
     "python-docx>=1.2.0",
+    "quarto-cli>=1.10.19",
     "ruff>=0.16.10",
 ]
+
+[tool.marimo.runtime]
+auto_instantiate = true
