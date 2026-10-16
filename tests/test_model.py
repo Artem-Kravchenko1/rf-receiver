@@ -182,7 +182,7 @@ def test_U_tol_of_f_tol(f_0, f_tol, U_tol_expected):
     )
 
 
-STATION_STATUS_CASES = [
+F_0_STATUS_CASES = [
     (88.4e6, 1e3, "WEAK"),
     (91.4e6, 1e3, "WEAK"),
     (96.0e6, 1e3, "WEAK"),
@@ -205,13 +205,13 @@ STATION_STATUS_CASES = [
 
 
 @pytest.mark.parametrize(
-    "f_0, R_loss, station_status_expected",
-    STATION_STATUS_CASES,
+    "f_0, R_loss, f_0_status_expected",
+    F_0_STATUS_CASES,
     ids=[
         f"f_0 = {MHz(f_0)}, R_loss = {kOhm(R_loss)}"
-        for f_0, R_loss, _ in STATION_STATUS_CASES
+        for f_0, R_loss, _ in F_0_STATUS_CASES
     ],
 )
-def test_station_status_of_f_0_and_R_loss(f_0, R_loss, station_status_expected):
+def test_f_0_status_of_f_0_and_R_loss(f_0, R_loss, f_0_status_expected):
     cp_modified = dataclasses.replace(DEFAULT_CP, R_loss=R_loss)
-    assert model.station_status(f_0, cp=cp_modified) == station_status_expected
+    assert model.f_0_status(f_0, cp=cp_modified) == f_0_status_expected
